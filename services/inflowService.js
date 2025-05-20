@@ -11,13 +11,13 @@ async function fetchCostForSKU(sku) {
   try {
     const res = await axios.get(`${BASE_URL}/products`, {
       headers: HEADERS,
-      params: {
-        'filter[smart]': sku
-      }
+      params: { 'filter[smart]': sku }
     });
 
     const products = res.data;
     if (products.length) {
+      console.log(`🧾 InFlow product JSON for ${sku}:`, JSON.stringify(products[0], null, 2)); // 🟦 log full JSON
+
       const product = products[0];
       if (product.defaultVendorCost?.amount) {
         return parseFloat(product.defaultVendorCost.amount);
@@ -25,11 +25,14 @@ async function fetchCostForSKU(sku) {
       if (product.defaultPrice?.amount) {
         return parseFloat(product.defaultPrice.amount);
       }
+    } else {
+      console.log(`⚠️ No product found for ${sku}`);
     }
   } catch (err) {
-    console.error(`Error fetching cost for SKU ${sku}:`, err.response?.data || err.message);
+    console.error(`❌ Error fetching cost for SKU ${sku}:`, err.response?.data || err.message);
   }
-  return null;
+
+  return 'missing';  // 🔁 string marker for the frontend
 }
 
 async function fetchOrderedQuantity(sku, dateFrom, dateTo) {
