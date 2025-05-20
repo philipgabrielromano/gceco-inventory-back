@@ -1,45 +1,30 @@
-// server/routes/reportRoute.js
-const express = require('express');
-const router = express.Router();
-
-const { fetchSalesData } = require('../services/posService');
-const { fetchCostForSKU } = require('../services/inflowService');
-const { groupBySKU } = require('../utils/aggregate');
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 router.get('/', async (req, res) => {
   const { dateFrom, dateTo } = req.query;
-  console.log(`➡️  Received /api/report request: dateFrom=${dateFrom}, dateTo=${dateTo}`);
-
-  if (!dateFrom || !dateTo) {
-    console.log('❌ Missing dateFrom or dateTo query parameter.');
-    return res.status(400).json({ error: 'Missing dateFrom or dateTo query parameters' });
-  }
+  console.log(`➡️  /api/report request: dateFrom=${dateFrom}, dateTo=${dateTo}`);
 
   try {
-    console.log('🔄 Calling fetchSalesData...');
     const rawSales = await fetchSalesData(dateFrom, dateTo);
-    console.log(`✅ fetchSalesData returned ${rawSales.length} records.`);
+    console.log(`📦 fetched ${rawSales.length} sales lines`);
 
-    if (rawSales.length === 0) {
-      console.log('⚠️ No sales data found for the given date range.');
-    }
-
-    console.log('🔄 Grouping data by SKU...');
     const grouped = await groupBySKU(rawSales);
-    console.log(`✅ Grouped into ${grouped.length} SKU entries.`);
+    const filtered = grouped.filter(item => {
+      const category = item.category?.toLowerCase() || '';
+      return category.includes('new') || category.includes('ng');
+    });
 
-    for (const skuObj of grouped) {
+    console.log(`🔍 ${filtered.length} SKUs match 'new' or 'NG' category`);
+
+    for (const skuObj of filtered) {
       const cost = await fetchCostForSKU(skuObj.sku);
       skuObj.cost = cost;
-      console.log(`💵 Added cost for SKU ${skuObj.sku}: ${cost ?? 'N/A'}`);
+      await sleep(300); // Delay to avoid 429 rate limiting
     }
 
-    console.log('🚀 Sending response...');
-    res.json(grouped);
+    res.json(filtered);
   } catch (err) {
-    console.error('❌ Error during /api/report processing:', err);
+    console.error('❌ Error in /api/report:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-module.exports = router;
