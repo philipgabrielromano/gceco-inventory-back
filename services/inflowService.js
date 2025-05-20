@@ -1,4 +1,3 @@
-// server/services/inflowService.js
 const axios = require('axios');
 
 const BASE_URL = `https://cloudapi.inflowinventory.com/${process.env.INFLOW_COMPANY_ID}`;
@@ -17,12 +16,28 @@ async function fetchCostForSKU(sku) {
     });
 
     const products = res.data;
-    if (products.length && products[0].defaultVendorCost) {
-      return parseFloat(products[0].defaultVendorCost.amount);
+    if (products.length) {
+      const product = products[0];
+
+      // Try vendor cost first
+      if (product.defaultVendorCost?.amount) {
+        return parseFloat(product.defaultVendorCost.amount);
+      }
+
+      // Fall back to default price
+      if (product.defaultPrice?.amount) {
+        console.warn(`⚠️ Using defaultPrice for SKU ${sku}`);
+        return parseFloat(product.defaultPrice.amount);
+      }
+
+      console.warn(`⚠️ No cost or price found for SKU ${sku}`);
+    } else {
+      console.warn(`⚠️ No InFlow product found for SKU ${sku}`);
     }
   } catch (err) {
-    console.error(`Error fetching cost for SKU ${sku}:`, err.response?.data || err.message);
+    console.error(`❌ Error fetching cost for SKU ${sku}:`, err.response?.data || err.message);
   }
+
   return null;
 }
 
