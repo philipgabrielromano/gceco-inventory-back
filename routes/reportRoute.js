@@ -10,7 +10,14 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 router.get('/', async (req, res) => {
   const { dateFrom, dateTo } = req.query;
-  console.log(`➡️  /api/report request: dateFrom=${dateFrom}, dateTo=${dateTo}`);
+  const logs = [];
+
+  function log(message) {
+    console.log(message);
+    logs.push(message);
+  }
+
+  log(`➡️  /api/report request: dateFrom=${dateFrom}, dateTo=${dateTo}`);
 
   if (!dateFrom || !dateTo) {
     return res.status(400).json({ error: 'Missing dateFrom or dateTo query parameters' });
@@ -18,7 +25,7 @@ router.get('/', async (req, res) => {
 
   try {
     const rawSales = await fetchSalesData(dateFrom, dateTo);
-    console.log(`📦 fetchSalesData returned ${rawSales.length} records`);
+    log(`📦 fetchSalesData returned ${rawSales.length} records`);
 
     const grouped = await groupBySKU(rawSales);
 
@@ -27,19 +34,23 @@ router.get('/', async (req, res) => {
       return category.includes('new') || category.includes('ng');
     });
 
-    console.log(`🔍 Filtered to ${filtered.length} SKUs with 'new' or 'NG' in category`);
+    log(`🔍 Filtered to ${filtered.length} SKUs with 'new' or 'NG' in category`);
 
     for (const skuObj of filtered) {
+      log(`💡 Fetching data for SKU: ${skuObj.sku}`);
+
       const cost = await fetchCostForSKU(skuObj.sku);
       skuObj.cost = cost;
-      await sleep(250);
+      log(`💵 Cost for ${skuObj.sku}: ${cost ?? 'N/A'}`);
+      await sleep(2000);
 
       const orderedQty = await fetchOrderedQuantity(skuObj.sku, dateFrom, dateTo);
       skuObj.orderedQuantity = orderedQty ?? 0;
-      await sleep(250);
+      log(`📦 Ordered Qty for ${skuObj.sku}: ${orderedQty ?? 'N/A'}`);
+      await sleep(2000);
     }
 
-    res.json(filtered);
+    res.json({ data: filtered, logs });
   } catch (err) {
     console.error('❌ Error in /api/report:', err);
     res.status(500).json({ error: 'Internal server error' });
