@@ -7,32 +7,58 @@ const HEADERS = {
   'Accept': 'application/json;version=2024-10-01'
 };
 
-async function fetchCostForSKU(sku) {
-  try {
+let productCatalog = null;
+
+async function loadAllProducts() {
+  const allProducts = [];
+  let page = 1;
+
+  while (true) {
     const res = await axios.get(`${BASE_URL}/products`, {
       headers: HEADERS,
-      params: { 'filter[smart]': sku }
+      params: { page }
     });
 
-    const products = res.data;
-    if (products.length) {
-      console.log(`🧾 InFlow product JSON for ${sku}:`, JSON.stringify(products[0], null, 2)); // 🟦 log full JSON
+    const products = res.data || [];
+    allProducts.push(...products);
 
-      const product = products[0];
-      if (product.defaultVendorCost?.amount) {
-        return parseFloat(product.defaultVendorCost.amount);
-      }
-      if (product.defaultPrice?.amount) {
-        return parseFloat(product.defaultPrice.amount);
-      }
-    } else {
-      console.log(`⚠️ No product found for ${sku}`);
-    }
-  } catch (err) {
-    console.error(`❌ Error fetching cost for SKU ${sku}:`, err.response?.data || err.message);
+    console.log(`📄 Retrieved ${products.length} products from page ${page}`);
+
+    if (!products.length || !res.data.next_page) break;
+    page++;
   }
 
-  return 'missing';  // 🔁 string marker for the frontend
+  productCatalog = {};
+  for (const p of allProducts) {
+    if (p.productNumber) {
+      productCatalog[p.productNumber] = p;
+    }
+  }
+
+  console.log(`✅ Loaded ${Object.keys(productCatalog).length} products into memory.`);
+}
+
+async function fetchCostForSKU(sku) {
+  if (!productCatalog) {
+    await loadAllProducts();
+  }
+
+  const product = productCatalog[sku];
+  if (!product) {
+    console.warn(`⚠️ No product found for SKU ${sku}`);
+    return 'missing';
+  }
+
+  console.log(`🧾 Cached product match for ${sku}:`, JSON.stringify(product, null, 2));
+
+  if (product.defaultVendorCost?.amount) {
+    return parseFloat(product.defaultVendorCost.amount);
+  }
+  if (product.defaultPrice?.amount) {
+    return parseFloat(product.defaultPrice.amount);
+  }
+
+  return 'missing';
 }
 
 async function fetchOrderedQuantity(sku, dateFrom, dateTo) {
