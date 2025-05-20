@@ -1,4 +1,3 @@
-// server/server.js
 const express = require('express');
 const cors = require('cors');
 const reportRoute = require('./routes/reportRoute');
@@ -6,7 +5,7 @@ const reportRoute = require('./routes/reportRoute');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your frontend domain
+// ✅ Enable CORS for your frontend domain
 app.use(cors({
   origin: 'https://gceco-inventory-front.onrender.com'
 }));
@@ -19,5 +18,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
