@@ -9,15 +9,16 @@ function groupBySKU(records) {
     const key = `${sku}-${storeId}`;
 
     if (!grouped[sku]) {
-      grouped[sku] = {
-        sku,
-        description: rec.Description,
-        totalQuantitySold: 0,
-        totalRevenue: 0,
-        totalOrders: new Set(),
-        stores: {}
-      };
-    }
+  grouped[sku] = {
+    sku,
+    description: rec.Description,
+    category: rec.Category,
+    totalQuantitySold: 0,
+    totalRevenue: 0,
+    totalOrders: new Set(),
+    stores: {}
+  };
+}
 
     const skuGroup = grouped[sku];
     skuGroup.totalQuantitySold += rec.Qty;
