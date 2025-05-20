@@ -1,5 +1,4 @@
 // server/server.js
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const reportRoute = require('./routes/reportRoute');
@@ -7,9 +6,12 @@ const reportRoute = require('./routes/reportRoute');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+// Enable CORS for your frontend domain
+app.use(cors({
+  origin: 'https://gceco-inventory-front.onrender.com'
+}));
 
+app.use(express.json());
 app.use('/api/report', reportRoute);
 
 app.get('/', (req, res) => {
