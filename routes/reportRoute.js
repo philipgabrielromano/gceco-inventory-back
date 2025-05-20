@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 const { fetchSalesData } = require('../services/posService');
-const { fetchCostForSKU } = require('../services/inflowService');
+const { fetchCostForSKU, fetchOrderedQuantity } = require('../services/inflowService');
 const { groupBySKU } = require('../utils/aggregate');
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -32,7 +32,11 @@ router.get('/', async (req, res) => {
     for (const skuObj of filtered) {
       const cost = await fetchCostForSKU(skuObj.sku);
       skuObj.cost = cost;
-      await sleep(300); // Avoid 429 rate limiting
+      await sleep(250);
+
+      const orderedQty = await fetchOrderedQuantity(skuObj.sku, dateFrom, dateTo);
+      skuObj.orderedQuantity = orderedQty ?? 0;
+      await sleep(250);
     }
 
     res.json(filtered);
