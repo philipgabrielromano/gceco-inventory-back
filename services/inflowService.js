@@ -110,7 +110,7 @@ async function fetchCostForSKU(sku) {
   }
 
   return 'missing';
-}
+
 
 async function fetchOrderedQuantity(sku, dateFrom, dateTo) {
   try {
