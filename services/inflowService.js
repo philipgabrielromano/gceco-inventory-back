@@ -29,9 +29,12 @@ async function loadAllProducts() {
   }
 
   productCatalog = {};
+  console.log('🧪 Sample product object:', JSON.stringify(allProducts[0], null, 2));
+
   for (const p of allProducts) {
-    if (p.productNumber) {
-      productCatalog[p.productNumber] = p;
+    const key = p.productNumber || p.number || p.name || p.code;
+    if (key) {
+      productCatalog[key] = p;
     }
   }
 
