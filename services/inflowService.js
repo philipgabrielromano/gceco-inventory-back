@@ -60,6 +60,8 @@ async function loadVendorItems() {
   }
 
   vendorCostMap = {};
+  console.log('🧪 Sample vendor item:', JSON.stringify(allItems[0], null, 2));
+
   for (const item of allItems) {
     if (item.vendorItemCode && item.cost) {
       vendorCostMap[item.vendorItemCode] = parseFloat(item.cost);
@@ -84,26 +86,13 @@ async function fetchCostForSKU(sku) {
     return vendorCostMap[sku] ?? 'missing';
   }
 
-  console.log(`🧾 Cached product match for ${sku}:`, JSON.stringify(product, null, 2));
-
-  if (product.cost?.cost) {
-    return parseFloat(product.cost.cost);
-  }
-  if (product.defaultVendorCost?.amount) {
-    return parseFloat(product.defaultVendorCost.amount);
-  }
-  if (product.defaultPrice?.amount) {
-    return parseFloat(product.defaultPrice.amount);
-  }
-  if (product.vendorItems?.length && product.vendorItems[0].cost) {
-    return parseFloat(product.vendorItems[0].cost);
-  }
+  
   if (vendorCostMap[sku]) {
     return vendorCostMap[sku];
   }
 
   return 'missing';
-  }
+}
 
   console.log(`🧾 Cached product match for ${sku}:`, JSON.stringify(product, null, 2));
 
