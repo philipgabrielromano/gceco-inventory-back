@@ -70,7 +70,7 @@ async function loadVendorItems() {
 
   console.log(`✅ Loaded ${Object.keys(vendorCostMap).length} vendor costs into memory.`);
 }
-}
+
 
 async function fetchCostForSKU(sku) {
   if (!productCatalog) {
