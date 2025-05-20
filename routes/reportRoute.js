@@ -1,25 +1,38 @@
+// server/routes/reportRoute.js
+const express = require('express');
+const router = express.Router();
+
+const { fetchSalesData } = require('../services/posService');
+const { fetchCostForSKU } = require('../services/inflowService');
+const { groupBySKU } = require('../utils/aggregate');
+
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 router.get('/', async (req, res) => {
   const { dateFrom, dateTo } = req.query;
   console.log(`➡️  /api/report request: dateFrom=${dateFrom}, dateTo=${dateTo}`);
 
+  if (!dateFrom || !dateTo) {
+    return res.status(400).json({ error: 'Missing dateFrom or dateTo query parameters' });
+  }
+
   try {
     const rawSales = await fetchSalesData(dateFrom, dateTo);
-    console.log(`📦 fetched ${rawSales.length} sales lines`);
+    console.log(`📦 fetchSalesData returned ${rawSales.length} records`);
 
     const grouped = await groupBySKU(rawSales);
+
     const filtered = grouped.filter(item => {
       const category = item.category?.toLowerCase() || '';
       return category.includes('new') || category.includes('ng');
     });
 
-    console.log(`🔍 ${filtered.length} SKUs match 'new' or 'NG' category`);
+    console.log(`🔍 Filtered to ${filtered.length} SKUs with 'new' or 'NG' in category`);
 
     for (const skuObj of filtered) {
       const cost = await fetchCostForSKU(skuObj.sku);
       skuObj.cost = cost;
-      await sleep(300); // Delay to avoid 429 rate limiting
+      await sleep(300); // Avoid 429 rate limiting
     }
 
     res.json(filtered);
@@ -28,3 +41,5 @@ router.get('/', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+module.exports = router;
