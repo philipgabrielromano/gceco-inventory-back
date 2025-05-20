@@ -1,4 +1,3 @@
-// server/services/posService.js
 const axios = require('axios');
 
 const API_URL = 'https://rpt-api.solutionsitw.com/rest/v2/dgr/sales-line';
@@ -17,12 +16,25 @@ async function fetchSalesData(dateFrom, dateTo) {
     let page = 1;
     while (true) {
       const url = `${API_URL}?filter[]=ts>${dateFrom}&filter[]=ts<${dateTo}&filter[]=StoreId=${storeId}&page=${page}`;
-      const res = await axios.get(url, { headers: HEADERS });
-      const records = res.data?.data?.records || [];
-      if (!records.length) break;
-      allRecords.push(...records);
-      if (!res.data.next_page) break;
-      page++;
+      console.log(`📡 Fetching store ${storeId}, page ${page}`);
+      console.log(`🔗 URL: ${url}`);
+
+      try {
+        const res = await axios.get(url, { headers: HEADERS });
+        const records = res.data?.data?.records || [];
+
+        console.log(`📥 Received ${records.length} records for store ${storeId}`);
+
+        if (!records.length) break;
+
+        allRecords.push(...records);
+
+        if (!res.data.next_page) break;
+        page++;
+      } catch (err) {
+        console.error(`❌ Error fetching data for store ${storeId}:`, err.response?.data || err.message);
+        break;
+      }
     }
   }
 
