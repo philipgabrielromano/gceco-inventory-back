@@ -16,7 +16,7 @@ async function loadAllProducts() {
   while (true) {
     const res = await axios.get(`${BASE_URL}/products`, {
       headers: HEADERS,
-      params: { page }
+      params: { page, expand: 'vendorItems,cost,defaultVendorCost,defaultPrice' }
     });
 
     const products = res.data || [];
@@ -54,11 +54,17 @@ async function fetchCostForSKU(sku) {
 
   console.log(`🧾 Cached product match for ${sku}:`, JSON.stringify(product, null, 2));
 
+  if (product.cost?.cost) {
+    return parseFloat(product.cost.cost);
+  }
   if (product.defaultVendorCost?.amount) {
     return parseFloat(product.defaultVendorCost.amount);
   }
   if (product.defaultPrice?.amount) {
     return parseFloat(product.defaultPrice.amount);
+  }
+  if (product.vendorItems?.length && product.vendorItems[0].cost) {
+    return parseFloat(product.vendorItems[0].cost);
   }
 
   return 'missing';
